@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Troll Page 1 - Button Dodge</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #f5f5f5;
+      margin: 0;
+      overflow: hidden;
+    }
+
+    #clickMe {
+      position: absolute;
+      padding: 12px 24px;
+      background: #ff4757;
+      border: none;
+      color: white;
+      font-weight: bold;
+      border-radius: 5px;
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    audio {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <button id="clickMe" disabled>Access Your Picture</button>
+  <audio id="trollAudio" preload="auto"></audio> <!-- Static audio element -->
+
+  <script>
+    const audioFiles = [
+      "/static/audio/page1_1.mp3",
+      "/static/audio/page1_2.mp3",
+      "/static/audio/page1_3.mp3",
+      "/static/audio/page1_4.mp3",
+      "/static/audio/page1_5.mp3",
+      "/static/audio/page1_6.mp3",
+      "/static/audio/page1_7.mp3",
+      "/static/audio/page1_8.mp3",
+    ];
+
+    const button = document.getElementById("clickMe");
+    const audio = document.getElementById("trollAudio");
+
+    let isTrolling = true;
+    const trollDuration = 10000 + Math.random() * 10000; // 10–20 seconds
+
+    function moveButton(e) {
+      if (!isTrolling) return;
+
+      const rect = button.getBoundingClientRect();
+      const mouseX = e.clientX;
+      const mouseY = e.clientY;
+
+      const distX = mouseX - rect.left;
+      const distY = mouseY - rect.top;
+
+      if (Math.abs(distX) < 100 && Math.abs(distY) < 50) {
+        const maxX = window.innerWidth - button.offsetWidth;
+        const maxY = window.innerHeight - button.offsetHeight;
+        const newX = Math.random() * maxX;
+        const newY = Math.random() * maxY;
+
+        button.style.left = `${newX}px`;
+        button.style.top = `${newY}px`;
+      }
+    }
+
+    function playAudioLoop() {
+      if (!isTrolling) return;
+
+      const randomSrc = audioFiles[Math.floor(Math.random() * audioFiles.length)];
+      audio.src = randomSrc;
+
+      audio.play().then(() => {
+        console.log("Now playing:", randomSrc);
+      }).catch(e => {
+        console.log("Autoplay still blocked:", e);
+      });
+
+      audio.onended = () => {
+        if (isTrolling) playAudioLoop(); // Loop audio manually
+      };
+    }
+
+    function startAfterInteraction() {
+      window.removeEventListener("mousemove", startAfterInteraction);
+      playAudioLoop();
+    }
+
+    // Start audio on first mouse movement
+    window.addEventListener("mousemove", startAfterInteraction, {once : true});
+    window.addEventListener("mousemove", moveButton);
+
+    setTimeout(() => {
+      isTrolling = false;
+      audio.pause();
+      button.disabled = false;
+      button.style.cursor = "pointer";
+      button.style.opacity = 1;
+
+      const centerX = (window.innerWidth - button.offsetWidth) / 2;
+      const centerY = (window.innerHeight - button.offsetHeight) / 2;
+      button.style.left = `${centerX}px`;
+      button.style.top = `${centerY}px`;
+
+      button.addEventListener("click", () => {
+        window.location.href = "trollPage2.html";
+      });
+    }, trollDuration);
+  </script>
+</body>
+</html>

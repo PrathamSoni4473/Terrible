@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Troll Page 2 - Image Popups</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      background: #222;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    #mainButton {
+      padding: 15px 30px;
+      font-size: 18px;
+      background: #28a745;
+      border: none;
+      color: white;
+      border-radius: 5px;
+      cursor: not-allowed;
+      opacity: 0.5;
+      z-index: 1;
+    }
+
+    .popup {
+      position: absolute;
+      background: white;
+      border: 3px solid red;
+      box-shadow: 0 0 20px red;
+      z-index: 999;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .popup button {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      background: red;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .popup img {
+      max-width: 500px;
+      max-height: 700px;
+      width: auto;
+      height: auto;
+      object-fit: contain;
+    }
+
+    #qrCodeContainer {
+      margin-top: 20px;
+      display: none;  /* Initially hide the QR code */
+    }
+
+    #qrCode {
+      width: 200px;
+      height: 200px;
+      border: 1px solid white;
+    }
+  </style>
+</head>
+<body>
+
+  <h1 id="pageTitle">Almost There... Just Close the Ads!</h1>
+  <button id="mainButton" disabled>Get Access!</button>
+
+  <div id="qrCodeContainer">
+    <h2>Your Unique QR Code:</h2>
+    <img id="qrCode" src="" alt="QR Code">
+  </div>
+
+  <script>
+    const mainButton = document.getElementById("mainButton");
+    const pageTitle = document.getElementById("pageTitle");  // Reference to <h1>
+    const qrCodeContainer = document.getElementById("qrCodeContainer");  // Reference to QR code container
+    const qrCodeImg = document.getElementById("qrCode");  // Reference to QR code image
+    let activePopups = 0;
+    let totalSpawned = 0;
+    const maxPopups = 10;
+    let popupId = 0;
+    let currentAudio = null; // Keep track of the currently playing audio
+  
+    function createPopup() {
+      if (totalSpawned >= maxPopups) return;
+  
+      const popup = document.createElement("div");
+      popup.classList.add("popup");
+      const id = `popup-${popupId++}`;
+      popup.setAttribute("id", id);
+  
+      const imgNum = totalSpawned + 1;
+      popup.innerHTML = `
+        <button onclick="closePopup('${id}')">X</button>
+        <img src="/static/img/hero-carousel/${imgNum}.webp" alt="Ad Image ${imgNum}">
+      `;
+  
+      const img = popup.querySelector("img");
+      img.onload = function () {
+        const width = Math.min(img.width, 500);
+        const height = Math.min(img.height, 700);
+        popup.style.width = `${width}px`;
+        popup.style.height = `${height}px`;
+  
+        const maxTop = window.innerHeight - height - 30;
+        const maxLeft = window.innerWidth - width - 30;
+        const top = Math.random() * maxTop;
+        const left = Math.random() * maxLeft;
+  
+        popup.style.top = `${top}px`;
+        popup.style.left = `${left}px`;
+      };
+  
+      document.body.appendChild(popup);
+      activePopups++;
+      totalSpawned++;
+    }
+  
+    window.closePopup = function (id) {
+      const popup = document.getElementById(id);
+      if (popup) {
+        popup.remove();
+        activePopups--;
+  
+        const spawnCount = Math.min(2, maxPopups - totalSpawned);
+        for (let i = 0; i < spawnCount; i++) {
+          createPopup();
+        }
+  
+        // When all popups are cleared
+        if (totalSpawned === maxPopups && activePopups === 0) {
+          mainButton.disabled = false;
+          mainButton.style.cursor = "pointer";
+          mainButton.style.opacity = 1;
+  
+          // Update the title text
+          pageTitle.innerHTML = "Now Just click this Button To Generate Your unique QR to access the picture";
+  
+          // 🔇 Stop looping audio
+          if (currentAudio) {
+            currentAudio.pause();
+            currentAudio = null;
+          }
+  
+          // 🎵 Play final audio once
+          const finalAudio = new Audio("/static/audio/page3_1.mp3");
+          finalAudio.play().catch(e => console.warn("Couldn't autoplay final audio:", e));
+  
+          mainButton.addEventListener("click", () => {
+            // Display the QR code after button click
+            qrCodeContainer.style.display = 'block'; // Show the QR code container
+            
+            // Dynamic URL for QR code generation (can be any URL or unique data)
+            const uniqueUrl = "https://your-unique-url.com";
+            
+            // Generate a QR code dynamically for the URL
+            qrCodeImg.src = `https://api.qrserver.com/v1/create-qr-code/?data=${encodeURIComponent(uniqueUrl)}&size=200x200`;
+            
+            alert("You're free... for now 😈");
+            // window.location.href = "finalPage.html";
+          });
+        }
+      }
+    };
+  
+    createPopup(); // Start with 1 popup
+  
+    // 🔁 Looping audio logic
+    const audioFiles = [
+      "/static/audio/page2_1.mp3",
+      "/static/audio/page2_2.mp3",
+      "/static/audio/page2_3.mp3",
+      "/static/audio/page2_4.mp3",
+      "/static/audio/page2_5.mp3",
+      "/static/audio/page2_6.mp3",
+      "/static/audio/page2_7.mp3",
+      "/static/audio/page2_8.mp3",
+    ];
+  
+    function playAudioLoop() {
+      const randomAudio = audioFiles[Math.floor(Math.random() * audioFiles.length)];
+      currentAudio = new Audio(randomAudio);
+      currentAudio.play().then(() => {
+        console.log("Playing:", randomAudio);
+        currentAudio.addEventListener("ended", playAudioLoop);
+      }).catch(e => {
+        console.warn("Autoplay blocked. Waiting for interaction.");
+      });
+    }
+  
+    function startOnInteraction() {
+      window.removeEventListener("mousemove", startOnInteraction);
+      playAudioLoop();
+    }
+  
+    window.addEventListener("mousemove", startOnInteraction);
+  </script>
+  
+</body>
+</html>
